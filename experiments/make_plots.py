@@ -64,7 +64,7 @@ def fig_training_curves(seeds, strict_val, best_val):
 
 def fig_test_bars(summary, strict, strongest):
     names = ["RL (Q-learning)", strict, strongest]
-    labels = ["RL agent", "Strict midnight\ncutoff", "Strongest fixed\nschedule"]
+    labels = ["RL\nagent", "Strict\ncutoff", "Strongest\nfixed"]
     cols = ["tab:blue", "tab:red", "tab:green"]
     panels = [("reward", "Return"), ("delivered", "Water delivered (L)"),
               ("unmet", "Unmet demand (L)"), ("wasted", "Wasted water (L)")]
