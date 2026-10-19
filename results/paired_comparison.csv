@@ -1,0 +1,19 @@
+baseline,baseline_policy,subset,metric,rl_minus_baseline,ci95_low,ci95_high,rl_better_in_frac_of_scenarios
+strict midnight cutoff,Cutoff-FIT (no resume),all nights,reward,31.478066632186806,30.3547058397616,32.69928012169861,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),all nights,unmet,-1147.4148640514702,-1190.289755074803,-1106.7603517204393,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),all nights,wasted,667.8979289357302,631.9259703653505,701.5749946079907,0.028
+strict midnight cutoff,Cutoff-FIT (no resume),exam nights,reward,49.07657213313121,47.0859800266589,51.095514663173496,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),exam nights,unmet,-1754.48752445039,-1830.1929397398303,-1683.5231321521985,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),exam nights,wasted,718.7763745308034,641.444193991337,796.1507825262548,0.043478260869565216
+strict midnight cutoff,Cutoff-FIT (no resume),normal nights,reward,24.769244093152754,24.22717596744529,25.349623507190145,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),normal nights,unmet,-915.9893747281251,-938.766378985417,-894.1973331917764,1.0
+strict midnight cutoff,Cutoff-FIT (no resume),normal nights,wasted,648.5022784050117,613.3099872319317,684.1316603506076,0.022099447513812154
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),all nights,reward,15.023207502210091,13.950760916093659,16.174256678038226,0.972
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),all nights,unmet,-478.9779820965688,-518.1873317658584,-441.97937658668724,0.962
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),all nights,wasted,112.87319606869708,82.14382001546058,144.33022262367624,0.376
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),exam nights,reward,32.50038948583975,30.53620261597036,34.51124115796887,1.0
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),exam nights,unmet,-1079.0376870520206,-1148.5582489801477,-1012.1483642362207,1.0
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),exam nights,wasted,154.39295315179692,75.80950735449873,236.69695054969864,0.38405797101449274
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),normal nights,reward,8.36063536480431,7.961156770076455,8.761561026253506,0.9613259668508287
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),normal nights,unmet,-250.2259398759821,-264.2474089488913,-236.14057214876092,0.9475138121546961
+strongest fixed schedule,Cutoff-FIT (resume 04.0h),normal nights,wasted,97.04522237403472,65.6734205397236,127.94521218760534,0.3729281767955801
