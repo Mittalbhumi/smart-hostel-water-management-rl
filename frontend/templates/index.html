@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Hostel Water Management – RL demo</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--tx:#e2e8f0;--mut:#94a3b8;--rl:#38bdf8;--bl:#f87171}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx)}
+header{padding:14px 24px;border-bottom:1px solid #334155}h1{margin:0;font-size:20px}
+header p{margin:4px 0 0;color:var(--mut);font-size:13px}
+main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px 24px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;margin:12px 0 4px;font-size:13px;color:var(--mut)}label b{float:right;color:var(--tx)}
+input[type=range],select,input[type=number]{width:100%}
+button{margin-top:12px;width:100%;padding:10px;border:0;border-radius:8px;background:var(--rl);color:#0f172a;font-weight:700;cursor:pointer}
+button.sec{background:#334155;color:var(--tx)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kpis .card{margin:0}
+.kpis small{color:var(--mut)}.kpis div{font-size:14px;margin-top:4px}.rl{color:var(--rl)}.bl{color:var(--bl)}
+.gauge{height:14px;background:#334155;border-radius:7px;overflow:hidden;margin:4px 0 10px}
+.gauge i{display:block;height:100%;width:0;transition:width .25s}
+canvas{width:100%;height:210px;display:block}
+.strip{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;margin:4px 0 10px}
+.strip i{height:16px;border-radius:3px;display:block}
+.a0{background:#475569}.a1{background:#fbbf24}.a2{background:#38bdf8}
+.leg{font-size:12px;color:var(--mut)}.leg span{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px}
+h3{margin:0 0 6px;font-size:14px}#verdict{font-size:15px;line-height:1.5}
+</style></head><body>
+<header><h1>Smart Hostel Water Management using Reinforcement Learning</h1>
+<p>Simulation demo: the trained Q-learning agent vs a fixed midnight cutoff. All numbers are simulated (assumed parameters), not real hostel data.</p></header>
+<main>
+<aside class="card">
+  <h3>Tonight's conditions (18:00 → 06:00)</h3>
+  <label>Water in tank at 6 PM <b id="tank_pct_v"></b></label><input type="range" id="tank_pct" min="5" max="100" value="60">
+  <label>Residents in hostel <b id="residents_v"></b></label><input type="range" id="residents" min="20" max="120" value="80">
+  <label>Students present tonight (%) <b id="present_pct_v"></b></label><input type="range" id="present_pct" min="50" max="100" value="85">
+  <label>Incoming water supply (%) <b id="inflow_pct_v"></b></label><input type="range" id="inflow_pct" min="30" max="150" value="100">
+  <label><input type="checkbox" id="exam"> Exam night (extra demand 00:00–03:00)</label>
+  <label>Compare against</label>
+  <select id="baseline"><option value="strict">Strict midnight cutoff (off 00:00–06:00)</option><option value="resume">Cutoff + resume at 04:00</option></select>
+  <label>Scenario number (random seed)</label><input type="number" id="seed" value="200001">
+  <button onclick="run(false)">Run simulation</button>
+  <button class="sec" onclick="run(true)">New random night</button>
+  <p class="leg">The agent was trained with 80 residents; other sizes are outside its training range.</p>
+</aside>
+<section>
+  <div class="card"><h3>Clock: <span id="clock">18:00</span></h3>
+    <div class="leg"><span style="background:var(--rl)"></span>RL agent <span style="background:var(--bl)"></span><b id="bname">Midnight cutoff</b></div>
+    <small class="leg">Tank level now (RL)</small><div class="gauge"><i id="rl_tank" style="background:var(--rl)"></i></div><div class="leg" id="rl_tank_t"></div>
+    <small class="leg">Tank level now (cutoff)</small><div class="gauge"><i id="baseline_tank" style="background:var(--bl)"></i></div><div class="leg" id="baseline_tank_t"></div></div>
+  <div class="kpis">
+    <div class="card"><small>Demand served</small><div class="rl">RL <b id="rl_served">–</b></div><div class="bl">Cutoff <b id="baseline_served">–</b></div></div>
+    <div class="card"><small>Unmet demand</small><div class="rl">RL <b id="rl_unmet">–</b></div><div class="bl">Cutoff <b id="baseline_unmet">–</b></div></div>
+    <div class="card"><small>Water wasted</small><div class="rl">RL <b id="rl_waste">–</b></div><div class="bl">Cutoff <b id="baseline_waste">–</b></div></div>
+    <div class="card"><small>Water delivered</small><div class="rl">RL <b id="rl_deliv">–</b></div><div class="bl">Cutoff <b id="baseline_deliv">–</b></div></div>
+  </div>
+  <div class="card" style="margin-top:12px"><h3>Tank level (L)</h3><canvas id="c1"></canvas></div>
+  <div class="card"><h3>Student demand (dashed) and unmet demand per 30-min step (L)</h3><canvas id="c2"></canvas></div>
+  <div class="card"><h3>Valve decisions</h3>
+    <div class="leg">RL agent</div><div class="strip" id="rl_strip"></div>
+    <div class="leg">Cutoff</div><div class="strip" id="baseline_strip"></div>
+    <div class="leg"><span class="a0"></span>OFF<span class="a1"></span>SHORT (10 min)<span class="a2"></span>LONG (30 min) · left = 18:00, right = 06:00</div></div>
+  <div class="card"><div id="verdict">Set the conditions and press <b>Run simulation</b>.</div></div>
+</section></main>
+<script>
+const $=id=>document.getElementById(id),NAMES=['OFF','SHORT','LONG'],COL={rl:'#38bdf8',baseline:'#f87171'};
+let D=null,timer=null;
+document.querySelectorAll('input[type=range]').forEach(r=>{const o=$(r.id+'_v'),u=()=>o.textContent=r.value+(r.id=='residents'?'':'%');r.oninput=u;u();});
+const lab=i=>{const h=(18+i/2)%24;return String(Math.floor(h)).padStart(2,'0')+':'+(h%1?'30':'00');};
+function params(){return{tank_pct:+$('tank_pct').value,residents:+$('residents').value,present_pct:+$('present_pct').value,
+ inflow_pct:+$('inflow_pct').value,exam_night:$('exam').checked,baseline:$('baseline').value,seed:+$('seed').value};}
+async function run(rand){
+  if(rand)$('seed').value=200000+Math.floor(Math.random()*800000);
+  $('verdict').textContent='Running…';
+  const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(params())});
+  D=await r.json();$('bname').textContent=D.baseline_name;
+  ['rl','baseline'].forEach(k=>$(k+'_strip').innerHTML=D[k].steps.map((s,i)=>`<i class="a${s.action}" title="${lab(i)} ${NAMES[s.action]}"></i>`).join(''));
+  clearInterval(timer);let t=1;draw(t);timer=setInterval(()=>{t++;draw(t);if(t>=24)clearInterval(timer);},300);
+}
+function chart(cv,series,upto,max){
+  const d=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;cv.width=w*d;cv.height=h*d;
+  const g=cv.getContext('2d');g.scale(d,d);const L=48,R=10,T=8,B=22,X=i=>L+(w-L-R)*i/23,Y=v=>T+(h-T-B)*(1-v/max);
+  g.strokeStyle='#334155';g.fillStyle='#94a3b8';g.font='11px sans-serif';
+  for(let k=0;k<=4;k++){const v=max*k/4;g.beginPath();g.moveTo(L,Y(v));g.lineTo(w-R,Y(v));g.stroke();g.fillText(Math.round(v),4,Y(v)+4);}
+  for(let i=0;i<24;i+=4)g.fillText(lab(i),X(i)-14,h-6);
+  g.setLineDash([4,4]);g.beginPath();g.moveTo(X(12),T);g.lineTo(X(12),h-B);g.stroke();g.fillText('midnight',X(12)+4,T+10);
+  series.forEach(s=>{g.setLineDash(s.dash?[5,4]:[]);g.strokeStyle=s.c;g.lineWidth=2;g.beginPath();
+    s.v.slice(0,upto).forEach((v,i)=>i?g.lineTo(X(i),Y(v)):g.moveTo(X(i),Y(v)));g.stroke();});
+}
+function draw(upto){
+  const cap=D.meta.capacity;$('clock').textContent=lab(upto-1);
+  ['rl','baseline'].forEach(k=>{
+    const st=D[k].steps.slice(0,upto),s=a=>st.reduce((x,y)=>x+y[a],0),dem=s('demand'),un=s('unmet'),lvl=st[st.length-1].level_after;
+    $(k+'_served').textContent=(dem?Math.round(100*(1-un/dem)):100)+'%';$(k+'_unmet').textContent=Math.round(un)+' L';
+    $(k+'_waste').textContent=Math.round(s('wasted'))+' L';$(k+'_deliv').textContent=Math.round(s('delivered'))+' L';
+    $(k+'_tank').style.width=(100*lvl/cap)+'%';$(k+'_tank_t').textContent=Math.round(lvl)+' L of '+Math.round(cap)+' L';
+    [...$(k+'_strip').children].forEach((c,i)=>c.style.opacity=i<upto?1:.15);
+  });
+  const dem=D.rl.steps.map(s=>s.demand);
+  chart($('c1'),[{c:COL.rl,v:D.rl.steps.map(s=>s.level_after)},{c:COL.baseline,v:D.baseline.steps.map(s=>s.level_after)}],upto,cap);
+  chart($('c2'),[{c:'#94a3b8',v:dem,dash:true},{c:COL.rl,v:D.rl.steps.map(s=>s.unmet)},{c:COL.baseline,v:D.baseline.steps.map(s=>s.unmet)}],upto,Math.ceil(Math.max(...dem)/100)*100);
+  if(upto>=24){const a=D.rl.totals,b=D.baseline.totals,w=a.wasted-b.wasted,p=x=>Math.round(100*x)+'%';
+    $('verdict').innerHTML=`<b>${D.meta.exam_night?'Exam night':'Normal night'} (scenario ${D.meta.seed}):</b> the RL agent served ${p(a.service_level)} of student demand vs ${p(b.service_level)} for the cutoff, with ${Math.round(b.unmet-a.unmet)} L ${b.unmet>=a.unmet?'less':'more'} unmet demand, and ${Math.round(Math.abs(w))} L ${w>=0?'more':'less'} water wasted.`;}
+}
+window.onresize=()=>D&&draw(24);
+</script></body></html>
