@@ -30,7 +30,6 @@ A local Flask page that runs the **real simulator and the saved Q-table** (`resu
 You set the conditions for one night, press **Run simulation**, and watch it play out in 30-minute steps,
 with the RL agent and a midnight cutoff side by side.
 
-![Web demo](docs/frontend_demo.png)
 
 | You set | Meaning |
 |---|---|
